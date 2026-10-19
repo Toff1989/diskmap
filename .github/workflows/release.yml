@@ -26,9 +26,9 @@ jobs:
           - os: windows-latest
             script: powershell -ExecutionPolicy Bypass -File packaging/build_windows.ps1
           - os: macos-latest
-            script: ./packaging/build_macos.sh
+            script: bash ./packaging/build_macos.sh
           - os: ubuntu-22.04
-            script: ./packaging/build_linux.sh
+            script: bash ./packaging/build_linux.sh
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
