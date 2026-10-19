@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=DiskMap
+GenericName=Analyseur d'espace disque
+Comment=Visualise ce qui occupe l'espace de vos disques
+Exec=diskmap
+Icon=diskmap
+Terminal=false
+Categories=System;Utility;Filesystem;
+Keywords=disque;espace;treemap;stockage;
