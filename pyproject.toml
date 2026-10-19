@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diskmap"
+dynamic = ["version"]
+description = "Analyseur d'espace disque avec treemap interactive (tkinter, sans dépendance)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Environment :: X11 Applications",
+    "Topic :: System :: Filesystems",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+build = ["pyinstaller>=6.0", "pillow"]
+
+[project.gui-scripts]
+diskmap = "diskmap.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "diskmap.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["diskmap*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
