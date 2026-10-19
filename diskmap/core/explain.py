@@ -1,7 +1,7 @@
 """Explications en français des zones qui ne peuvent pas être détaillées."""
 from __future__ import annotations
 
-import os
+import re
 
 # Noms de dossiers connus (insensible à la casse) -> explication.
 _KNOWN = {
@@ -53,7 +53,8 @@ OTHER_NOTE = "Éléments les plus petits du dossier, regroupés pour limiter la 
 
 
 def explain(path: str, reason: str, detail: str = "") -> str:
-    known = _KNOWN.get(os.path.basename(path.rstrip("\\/")).lower())
+    name = re.split(r"[\\/]", path.rstrip("\\/"))[-1]  # sans os.path : valable pour tout style de chemin
+    known = _KNOWN.get(name.lower())
     if reason in ("junction", "symlink") and detail:
         return _BY_REASON[reason] + " Cible : " + detail
     return known or _BY_REASON.get(reason, "")
