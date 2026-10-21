@@ -1,5 +1,13 @@
 # DiskMap
 
+[![Version](https://img.shields.io/badge/version-2.0.0-3b6fd4)](https://github.com/Toff1989/diskmap/releases)
+[![Build & Release](https://github.com/Toff1989/diskmap/actions/workflows/release.yml/badge.svg)](https://github.com/Toff1989/diskmap/actions/workflows/release.yml)
+[![Python](https://img.shields.io/badge/python-3.8%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS%20%7C%20Linux-555)](#lancer)
+[![Dépendances](https://img.shields.io/badge/d%C3%A9pendances-aucune-brightgreen)](#lancer)
+[![Lecture seule](https://img.shields.io/badge/fichiers-lecture%20seule-2e8b57)](#nouveautés-de-la-version-2)
+[![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+
 Analyseur d'espace disque avec une treemap interactive. Windows, macOS et Linux.
 Python 3.8+, interface **tkinter** (incluse avec Python) : aucune dépendance.
 
