@@ -29,5 +29,8 @@ version = { attr = "diskmap.__version__" }
 [tool.setuptools.packages.find]
 include = ["diskmap*"]
 
+[tool.setuptools.package-data]
+diskmap = ["assets/*.png", "assets/*.ico"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

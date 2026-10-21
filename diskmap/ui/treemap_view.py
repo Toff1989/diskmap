@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import os
+import time
 import tkinter as tk
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
 
-from ..core import Node, human_size, squarify
+from ..core import Node, age_bucket, human_size, signed_size, squarify
 from . import theme
 
 Crumb = Tuple[Node, str]  # (nœud, chemin complet)
@@ -43,6 +44,11 @@ class TreemapView(tk.Canvas):
         self._selected: Optional[str] = None
         self._hits: List[Hit] = []
         self._job: Optional[str] = None
+        self._mode = "type"                      # "type" | "age" | "change"
+        self._now = time.time()
+        self._highlight: Dict[str, str] = {}     # chemin -> couleur (groupes de doublons)
+        self._highlight_dirs: Set[str] = set()   # dossiers qui contiennent un élément surligné
+        self._growth: Dict[str, int] = {}        # chemin -> octets gagnés (surveillance)
 
         self.bind("<Configure>", lambda e: self._schedule())
         self.bind("<Motion>", lambda e: self._on_hover(self._find(e.x, e.y)))
@@ -57,6 +63,25 @@ class TreemapView(tk.Canvas):
         self._stack = list(stack)
         self._selected = selected
         self.redraw()
+
+    def set_mode(self, mode: str) -> None:
+        self._mode = mode
+
+    def set_highlight(self, colors: Dict[str, str]) -> None:
+        """Entoure ces chemins (couleur par chemin) ; les dossiers parents reçoivent un pointillé."""
+        self._highlight = dict(colors)
+        dirs: Set[str] = set()
+        for p in colors:
+            q = p.replace("\\", "/")
+            while "/" in q.rstrip("/"):
+                q = q.rstrip("/").rsplit("/", 1)[0]
+                dirs.add(q)
+        self._highlight_dirs = dirs
+        self._draw_overlays()
+
+    def set_growth(self, growth: Dict[str, int]) -> None:
+        self._growth = dict(growth)
+        self._draw_overlays()
 
     def select(self, path: Optional[str]) -> None:
         """Met en évidence un chemin sans tout redessiner."""
@@ -80,7 +105,9 @@ class TreemapView(tk.Canvas):
         if not self._stack:
             self._placeholder()
             return
+        self._now = time.time()
         self._draw(self._stack[-1][0], 0, 0, self.winfo_width(), self.winfo_height(), 0, self._stack)
+        self._draw_overlays()
         self._draw_selection()
 
     def _placeholder(self) -> None:
@@ -99,21 +126,31 @@ class TreemapView(tk.Canvas):
             path = node.name if node.grouped else os.path.join(base, node.name)
             sub = chain + [(node, path)]
             self._hits.append(Hit(node, rx, ry, rw, rh, path, sub))
-            if node.unreadable:
-                fill = theme.UNREADABLE
-            elif node.grouped:
-                fill = theme.GROUPED
-            elif node.is_dir:
-                fill = theme.folder_color(depth)
-            else:
-                fill = theme.extension_color(node.name)
+            fill = self._fill(node, depth)
             self.create_rectangle(rx, ry, rx + rw, ry + rh, fill=fill, outline=theme.BG)
-            label = "%s  %s" % (node.name, human_size(node.size))
+            shown = signed_size(node.delta) if self._mode == "change" else human_size(node.size)
+            label = "%s  %s" % (node.name, shown)
             if node.is_dir and depth < _NEST_DEPTH and rw > 40 and rh > 34:
                 self._label(label, rx, ry, rw)
                 self._draw(node, rx + 2, ry + _HEADER, rw - 4, rh - _HEADER - 2, depth + 1, sub)
             elif rw > 46 and rh > 16:
                 self._label(label, rx, ry, rw)
+
+    def _fill(self, node: Node, depth: int) -> str:
+        if self._mode == "change":
+            if node.unreadable:
+                return theme.UNREADABLE
+            scale = self._stack[-1][0].size if self._stack else 0
+            return theme.delta_color(node.delta, scale / 5.0 if node.is_dir else scale / 10.0)
+        if node.unreadable:
+            return theme.UNREADABLE
+        if node.grouped:
+            return theme.GROUPED
+        if self._mode == "age":
+            return theme.age_color(age_bucket(node.mtime, self._now), dim=node.is_dir)
+        if node.is_dir:
+            return theme.folder_color(depth)
+        return theme.extension_color(node.name)
 
     def _label(self, text: str, x: float, y: float, w: float) -> None:
         max_chars = int((w - 8) / _CHAR_W)
@@ -122,6 +159,23 @@ class TreemapView(tk.Canvas):
         if len(text) > max_chars:
             text = text[:max_chars - 1] + "…"
         self.create_text(x + 4, y + 3, text=text, anchor="nw", fill="#fff", font=theme.FONT)
+
+    def _draw_overlays(self) -> None:
+        self.delete("ov")
+        if not (self._highlight or self._growth):
+            return
+        for hit in self._hits:
+            color = self._highlight.get(hit.path)
+            if color:
+                self.create_rectangle(hit.x + 1, hit.y + 1, hit.x + hit.w - 1, hit.y + hit.h - 1,
+                                      outline=color, width=3, tags="ov")
+            elif hit.node.is_dir and hit.path.replace("\\", "/") in self._highlight_dirs:
+                self.create_rectangle(hit.x + 1, hit.y + 1, hit.x + hit.w - 1, hit.y + hit.h - 1,
+                                      outline="#ff4fd8", width=1, dash=(3, 3), tags="ov")
+            if hit.path in self._growth:
+                self.create_rectangle(hit.x + 2, hit.y + 2, hit.x + hit.w - 2, hit.y + hit.h - 2,
+                                      outline=theme.GROWTH_OUTLINE, width=2, tags="ov")
+        self.tag_raise("sel")
 
     def _draw_selection(self) -> None:
         self.delete("sel")

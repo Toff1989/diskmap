@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Callable, List, Optional
 
-from ..core import Node, human_size
+from ..core import Node, human_size, signed_size
 
 MAX_ROWS = 500
 
@@ -35,15 +35,17 @@ class EntryList(ttk.Frame):
         self.tree.bind("<<TreeviewSelect>>", lambda e: self._emit(self._on_select))
         self.tree.bind("<Button-3>", self._menu)
 
-    def show(self, folder: Node, path: str) -> None:
+    def show(self, folder: Node, path: str, change: bool = False) -> None:
+        """``change`` : colonnes en variations signées (arbre de comparaison)."""
         self._base = path
         self._items = sorted(folder.children, key=lambda k: k.size, reverse=True)[:MAX_ROWS]
         self.tree.delete(*self.tree.get_children())
         total = folder.size or 1
         for i, k in enumerate(self._items):
             icon = "📁 " if k.is_dir else "   "
+            shown = signed_size(k.delta) if change else human_size(k.size)
             self.tree.insert("", "end", iid=str(i), text=icon + k.name,
-                             values=(human_size(k.size), "%.1f%%" % (k.size / total * 100)))
+                             values=(shown, "%.1f%%" % (k.size / total * 100)))
 
     def path_of(self, node: Node) -> str:
         return os.path.join(self._base, node.name)

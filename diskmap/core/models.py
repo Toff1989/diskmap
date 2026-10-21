@@ -11,11 +11,12 @@ class Node:
     ``__slots__`` : un scan complet crée plusieurs centaines de milliers de nœuds.
     """
 
-    __slots__ = ("name", "size", "children", "grouped", "count", "unreadable", "note")
+    __slots__ = ("name", "size", "children", "grouped", "count", "unreadable", "note",
+                 "mtime", "project", "delta")
 
     def __init__(self, name: str, size: int = 0, children: "List[Node] | None" = None,
                  grouped: bool = False, count: int = 1, unreadable: bool = False,
-                 note: str = "") -> None:
+                 note: str = "", mtime: float = 0.0, project: str = "", delta: int = 0) -> None:
         self.name = name
         self.size = size
         self.children: List[Node] = children if children is not None else []
@@ -23,6 +24,9 @@ class Node:
         self.count = count             # nombre d'éléments réels représentés
         self.unreadable = unreadable   # espace occupé mais impossible à détailler
         self.note = note               # explication affichée à l'utilisateur
+        self.mtime = mtime             # dernière modification (dossier : la plus récente à l'intérieur)
+        self.project = project         # type de projet détecté dans ce dossier ("Node", "Python"…)
+        self.delta = delta             # variation signée (arbres de comparaison uniquement)
 
     @property
     def is_dir(self) -> bool:
