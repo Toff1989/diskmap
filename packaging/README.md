@@ -23,7 +23,7 @@ packaging/
   build.py            pilote commun : PyInstaller puis paquet du système courant
   diskmap.spec        spécification PyInstaller (mode onedir, sans console)
   entry.py            point d'entrée de l'exécutable
-  make_icons.py       régénère assets/icon.{png,ico,icns} (Pillow)
+  make_icons.py       régénère assets/icon.{png,ico,icns} (Pillow) et copie png/ico dans diskmap/assets/
   build_windows.ps1   build_macos.sh   build_linux.sh
   windows/installer.iss   installeur Inno Setup
   linux/diskmap.desktop   entrée de menu
@@ -45,6 +45,7 @@ packaging/
 
 ## Release automatique
 
+`.github/workflows/tests.yml` exécute les tests à chaque push et pull request.
 `.github/workflows/release.yml` lance les tests puis construit les trois systèmes. Un tag `vX.Y.Z`
 publie les fichiers dans une release GitHub ; un lancement manuel (`workflow_dispatch`) ne produit que
 les artefacts. La version vient de `diskmap/__init__.py` (`__version__`).
