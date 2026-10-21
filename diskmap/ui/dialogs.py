@@ -223,6 +223,7 @@ class CleanupDialog(tk.Toplevel):
         self.transient(master)
         self._findings, self._cold_fn, self._on_goto = findings, cold_fn, on_goto
         self._scan_root, self._on_removed = scan_root, on_removed
+        self._removal_open = False
         self._plans: List[Plan] = [plan_removal(f, scan_root, is_admin) if scan_root else
                                    Plan(f, "none", "Action manuelle", blocked="aucun dossier d'analyse")
                                    for f in findings]
@@ -318,7 +319,11 @@ class CleanupDialog(tk.Toplevel):
             messagebox.showinfo("Que supprimer ?", "DiskMap ne peut rien supprimer dans cette sélection :\n\n"
                                 + "\n".join("• " + p.detail for p in chosen[:5]), parent=self)
             return
-        RemovalDialog(self, chosen, self._scan_root, self._removal_finished)
+        if self._removal_open:                      # une seule confirmation à la fois
+            return
+        self._removal_open = True
+        RemovalDialog(self, chosen, self._scan_root, self._removal_finished,
+                      on_closed=lambda: setattr(self, "_removal_open", False))
 
     def _removal_finished(self, changed: bool) -> None:
         if changed and self._on_removed:

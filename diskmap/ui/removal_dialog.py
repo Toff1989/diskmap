@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import queue
+import sys
 import threading
 import tkinter as tk
 from tkinter import ttk
@@ -32,7 +33,8 @@ class RemovalDialog(tk.Toplevel):
     """Rien n'est exécuté tant que la case de confirmation n'est pas cochée ET le bouton rouge cliqué."""
 
     def __init__(self, master: tk.Misc, plans: List[Plan], scan_root: str,
-                 on_finished: Callable[[bool], None]) -> None:
+                 on_finished: Callable[[bool], None],
+                 on_closed: Optional[Callable[[], None]] = None) -> None:
         super().__init__(master, bg=theme.BG2)
         self.title("Confirmer la suppression")
         self.geometry("940x620")
@@ -40,7 +42,7 @@ class RemovalDialog(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self._close_request)
         self._plans = sorted(plans, key=lambda p: (not p.runnable, -p.finding.size))
         self._todo = [p for p in self._plans if p.runnable]
-        self._root, self._on_finished = scan_root, on_finished
+        self._root, self._on_finished, self._on_closed = scan_root, on_finished, on_closed
         self._remover: Optional[Remover] = None
         self._thread: Optional[threading.Thread] = None
         self._queue: "queue.Queue[tuple]" = queue.Queue()
@@ -123,7 +125,9 @@ class RemovalDialog(tk.Toplevel):
 
     def _grab(self) -> None:
         self._grab_job = None
-        if not self.winfo_exists():
+        # Pas de grab sous macOS : avec Tk il y fait abattre le processus (Abort trap observé en CI). La
+        # fenêtre de « Que supprimer ? » empêche déjà d'en ouvrir une seconde tant que celle-ci existe.
+        if sys.platform == "darwin" or not self.winfo_exists():
             return
         try:
             self.grab_set()
@@ -235,3 +239,5 @@ class RemovalDialog(tk.Toplevel):
         except tk.TclError:
             pass
         self.destroy()
+        if self._on_closed:
+            self._on_closed()
