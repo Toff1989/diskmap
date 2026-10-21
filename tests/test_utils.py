@@ -3,7 +3,6 @@ import os
 import pytest
 
 from diskmap.core import detect_drives, human_size
-from diskmap.ui.theme import extension_color, hsl
 
 
 @pytest.mark.parametrize("value, expected", [
@@ -29,11 +28,15 @@ def test_shorten_middle_keeps_the_end_of_a_path():
 
 
 def test_hsl_known_values():
+    pytest.importorskip("tkinter")                   # le thème importe tkinter : absent sur un serveur sans écran
+    from diskmap.ui.theme import hsl
     assert hsl(0, 1, 0.5) == "#ff0000"
     assert hsl(120, 1, 0.5) == "#00ff00"
     assert hsl(0, 0, 0) == "#000000"
 
 
 def test_extension_color_is_stable_and_case_insensitive():
+    pytest.importorskip("tkinter")
+    from diskmap.ui.theme import extension_color
     assert extension_color("a.MP4") == extension_color("b.mp4")
     assert extension_color("noext") == extension_color(".hidden")
