@@ -1,0 +1,21 @@
+name: Sonde macOS (temporaire)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    name: ${{ matrix.variant }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [base, noprogress, nothread, notransient, plain]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Sonde
+        run: python .github/scripts/mac_probe.py ${{ matrix.variant }} 25
