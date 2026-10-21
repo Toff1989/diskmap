@@ -10,8 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [base, nothread]
-        rep: [1, 2, 3]
+        variant: [base, apponly]
+        rep: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,4 +19,9 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - name: Sonde
-        run: python .github/scripts/mac_probe.py ${{ matrix.variant }} 25
+        run: |
+          set +e
+          python -X faulthandler .github/scripts/mac_probe.py ${{ matrix.variant }} 25
+          code=$?
+          echo "CODE-DE-SORTIE=$code"
+          exit $code

@@ -53,7 +53,9 @@ for i in range(n):
     app = App()
     app.geometry("1000x700")
     app.update()
-    if variant == "plain":
+    if variant == "apponly":
+        app.update()
+    elif variant == "plain":
         win = tk.Toplevel(app)
         win.transient(app)
         tk.Label(win, text="x").pack()
