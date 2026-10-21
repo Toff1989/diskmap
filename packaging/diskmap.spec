@@ -28,7 +28,7 @@ a = Analysis(
     [os.path.join(SPECPATH, "entry.py")],
     pathex=[ROOT],
     binaries=[],
-    datas=[],
+    datas=[(os.path.join(ROOT, "diskmap", "assets"), os.path.join("diskmap", "assets"))],
     hiddenimports=[],
     excludes=["numpy", "scipy", "matplotlib", "pandas", "PIL", "IPython", "pytest", "setuptools"],
     noarchive=False,

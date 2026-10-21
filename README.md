@@ -1,5 +1,13 @@
 # DiskMap
 
+[![Version](https://img.shields.io/badge/version-2.0.0-3b6fd4)](https://github.com/Toff1989/diskmap/releases)
+[![Build & Release](https://github.com/Toff1989/diskmap/actions/workflows/release.yml/badge.svg)](https://github.com/Toff1989/diskmap/actions/workflows/release.yml)
+[![Python](https://img.shields.io/badge/python-3.8%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS%20%7C%20Linux-555)](#lancer)
+[![Dépendances](https://img.shields.io/badge/d%C3%A9pendances-aucune-brightgreen)](#lancer)
+[![Lecture seule](https://img.shields.io/badge/fichiers-lecture%20seule-2e8b57)](#nouveautés-de-la-version-2)
+[![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+
 Analyseur d'espace disque avec une treemap interactive. Windows, macOS et Linux.
 Python 3.8+, interface **tkinter** (incluse avec Python) : aucune dépendance.
 
@@ -27,6 +35,25 @@ même, avec des droits normaux. `--no-admin` désactive la demande.
 | Clic droit | ouvrir l'emplacement, copier le chemin |
 | F5 | réanalyser |
 
+## Nouveautés de la version 2
+
+| Fonction | Où | Ce que ça fait |
+|---|---|---|
+| **Machine à remonter le temps** | Analyse › Comparer à un instantané… | Un instantané compressé est enregistré après chaque analyse (`~/.diskmap/snapshots`, 30 par chemin). La carte **Changements** montre ce qui a grossi (rouge) ou rétréci (vert) ; l'analyse précédente sert de base automatiquement. |
+| **Comparer deux dossiers / disques** | Analyse › Comparer à un autre dossier… | Même carte de différences entre une source et sa sauvegarde, par exemple. |
+| **Doublons** | Outils › Doublons… | Taille → empreinte partielle → empreinte complète ; liens physiques ignorés. Un groupe = une couleur surlignée sur la carte, avec l'espace récupérable. |
+| **Que supprimer ?** | Outils › Que supprimer ? | Catalogue de caches et dossiers régénérables (`node_modules`, `__pycache__`, DerivedData, Docker, Windows Update…) classés par *espace × sécurité*, avec l'explication et la commande conseillée. |
+| **Fichiers froids** | même fenêtre, 2ᵉ onglet · Couleur › Ancienneté | Carte colorée par date de dernière modification ; liste des plus gros éléments intouchés depuis 1, 2 ou 5 ans. |
+| **Surveillance en direct** | Analyse › Surveiller le dossier affiché | Réanalyse le dossier affiché toutes les 5–60 s ; ce qui grossit est entouré en orange. |
+| **Projets de code** | Outils › Projets de code… | Sources / dépôt Git / dépendances et builds par projet (Node, Python, Rust, Go, Java, .NET…). |
+| **Rapport HTML** | Fichier › Exporter un rapport HTML… | Page autonome avec treemap interactive (zoom, infobulles, couleur par type ou ancienneté). |
+| **Icône partout** | – | Barre de titre, barre des tâches, Alt-Tab, exécutable, installeur, `.app`, paquet Linux. |
+
+Sans fenêtre : `python -m diskmap C:\ --snapshot` et `python -m diskmap C:\ --export-html rapport.html`
+(utile en tâche planifiée pour construire l'historique).
+
+DiskMap reste en **lecture seule** : les outils expliquent et proposent, ils ne suppriment rien.
+
 ### Pourquoi certaines zones ne sont pas détaillées
 
 - **Bloc rouge « 🔒 Non lisible »** : espace utilisé sur le disque mais impossible à lire (points de
@@ -51,6 +78,14 @@ diskmap/
     treemap.py       algorithme squarified treemap
     drives.py        détection des disques par OS
     formatting.py    formatage des tailles
+    diff.py          carte des changements entre deux arbres
+    snapshot.py      instantanés compressés (enregistrer, lister, charger)
+    duplicates.py    recherche de doublons
+    cleanup.py       catalogue de nettoyage, fichiers froids
+    projects.py      détection des projets de code
+    age.py           tranches d'ancienneté
+    export.py        rapport HTML autonome
+    tree.py          parcours et chemins dans l'arbre
   ui/              interface tkinter
     app.py           fenêtre principale, pilotage du scan en thread
     treemap_view.py  canvas de la treemap + souris
@@ -58,6 +93,8 @@ diskmap/
     navbar.py        « Remonter » + fil d'Ariane
     toolbar.py       sélection du disque, boutons Analyser / Annuler
     theme.py         couleurs et styles
+    modebar.py       choix de la couleur (type / ancienneté / changements) + légende
+    dialogs.py       fenêtres : instantanés, doublons, nettoyage, projets
     system.py        intégration explorateur de fichiers
   __main__.py      point d'entrée (python -m diskmap)
 tests/             tests unitaires du cœur

@@ -1,10 +1,11 @@
-"""Génère les icônes (PNG, ICO, ICNS) dans packaging/assets/. Nécessite Pillow.
+"""Génère les icônes (PNG, ICO, ICNS) dans packaging/assets/ (+ PNG/ICO copiés dans diskmap/assets/). Nécessite Pillow.
 
     python packaging/make_icons.py
 """
 from __future__ import annotations
 
 import os
+import shutil
 
 from PIL import Image, ImageDraw
 
@@ -43,6 +44,11 @@ def main() -> None:
     base.resize((512, 512), Image.LANCZOS).save(os.path.join(OUT, "icon.png"))
     base.save(os.path.join(OUT, "icon.ico"), sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])
     base.save(os.path.join(OUT, "icon.icns"))
+    # Copie embarquée dans le paquet : icône de la fenêtre (barre de titre, barre des tâches, Alt-Tab).
+    pkg = os.path.join(HERE, "..", "diskmap", "assets")
+    os.makedirs(pkg, exist_ok=True)
+    for name in ("icon.png", "icon.ico"):
+        shutil.copyfile(os.path.join(OUT, name), os.path.join(pkg, name))
     print("Icônes écrites dans", OUT)
 
 

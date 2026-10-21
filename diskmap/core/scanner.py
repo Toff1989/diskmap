@@ -7,8 +7,9 @@ import sys
 import time
 from typing import List, Optional, Set, Tuple
 
-from .explain import OTHER_NOTE, SMALL_NOTE, UNREADABLE_NAME, UNREADABLE_NOTE
 from .models import Node, ScanResult, SkipEntry
+from .projects import project_kind
+from .explain import OTHER_NOTE, SMALL_NOTE, UNREADABLE_NAME, UNREADABLE_NOTE
 
 IS_WIN = os.name == "nt"
 IS_MAC = sys.platform == "darwin"
@@ -54,7 +55,7 @@ def prune(kids: List[Node]) -> List[Node]:
     head, tail = kids[:MAX_KIDS], kids[MAX_KIDS:]
     cnt = sum(k.count for k in tail)
     head.append(Node("(%d autres)" % cnt, sum(k.size for k in tail), grouped=True, count=cnt,
-                     note=OTHER_NOTE))
+                     note=OTHER_NOTE, mtime=max(k.mtime for k in tail)))
     return head
 
 
@@ -64,6 +65,7 @@ def compact(node: Node, min_size: float) -> None:
         return
     keep: List[Node] = []
     small_size = small_count = 0
+    small_mtime = 0.0
     for k in node.children:
         if k.size >= min_size or k.unreadable:
             keep.append(k)
@@ -71,9 +73,10 @@ def compact(node: Node, min_size: float) -> None:
         else:
             small_size += k.size
             small_count += k.count
+            small_mtime = max(small_mtime, k.mtime)
     if small_count:
         keep.append(Node("(%d petits éléments)" % small_count, small_size,
-                         grouped=True, count=small_count, note=SMALL_NOTE))
+                         grouped=True, count=small_count, note=SMALL_NOTE, mtime=small_mtime))
     node.children = keep
 
 
@@ -138,12 +141,16 @@ class Scanner:
         if self._cancelled:
             raise ScanCancelled()
         self.current = path
-        size, kids = 0, []
+        size, kids, latest, kind = 0, [], 0.0, ""
         try:
             with os.scandir(path) as it:
                 for entry in it:
+                    kind = project_kind(entry.name, kind)
                     try:
-                        size += self._scan_entry(entry, depth, kids)
+                        esize, emtime = self._scan_entry(entry, depth, kids)
+                        size += esize
+                        if emtime > latest:
+                            latest = emtime
                     except PermissionError:
                         self._skip(entry.path, "denied")
                     except OSError:
@@ -152,31 +159,32 @@ class Scanner:
             self._skip(path, "denied")
         except OSError:
             self.errors += 1
-        return Node(name, size, prune(kids) if depth < MAX_DEPTH else [])
+        return Node(name, size, prune(kids) if depth < MAX_DEPTH else [], mtime=latest, project=kind)
 
-    def _scan_entry(self, entry: "os.DirEntry[str]", depth: int, kids: List[Node]) -> int:
-        """Traite une entrée ; renvoie sa taille locale et l'ajoute à ``kids``."""
+    def _scan_entry(self, entry: "os.DirEntry[str]", depth: int,
+                    kids: List[Node]) -> Tuple[int, float]:
+        """Traite une entrée ; renvoie (taille locale, dernière modification) et l'ajoute à ``kids``."""
         if entry.is_symlink():
             self._skip(entry.path, "symlink", _readlink(entry.path))
-            return 0
+            return 0, 0.0
         if entry.is_dir(follow_symlinks=False):
             reason, detail = self._dir_skip_reason(entry)
             if reason:
                 self._skip(entry.path, reason, detail)
-                return 0
+                return 0, 0.0
             child = self._scan_dir(entry.path, entry.name, depth + 1)
             kids.append(child)
-            return child.size
+            return child.size, child.mtime
         st = entry.stat(follow_symlinks=False)
         self.files += 1
         if is_cloud_only(st):          # placeholder OneDrive : rien sur le disque
             self.cloud_files += 1
             self.cloud_bytes += st.st_size
-            return 0
+            return 0, 0.0
         fsize = allocated_size(st)
         if fsize:
-            kids.append(Node(entry.name, fsize))
-        return fsize
+            kids.append(Node(entry.name, fsize, mtime=st.st_mtime))
+        return fsize, st.st_mtime
 
     def _dir_skip_reason(self, entry: "os.DirEntry[str]") -> Tuple[str, str]:
         if entry.path in self.skip:
