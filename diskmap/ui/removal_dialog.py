@@ -10,6 +10,7 @@ from typing import Callable, List, Optional
 
 from ..core import Outcome, Plan, Remover, human_size
 from . import theme
+from .safe_after import SafeAfter
 from .text import shorten_middle
 
 POLL_MS = 150
@@ -29,7 +30,7 @@ def _work(remover: Remover, results: "queue.Queue[tuple]") -> None:
         results.put(("error", exc))
 
 
-class RemovalDialog(tk.Toplevel):
+class RemovalDialog(SafeAfter, tk.Toplevel):
     """Rien n'est exécuté tant que la case de confirmation n'est pas cochée ET le bouton rouge cliqué."""
 
     def __init__(self, master: tk.Misc, plans: List[Plan], scan_root: str,

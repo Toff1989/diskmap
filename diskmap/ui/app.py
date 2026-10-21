@@ -19,6 +19,7 @@ from .dialogs import CleanupDialog, DuplicatesDialog, ProjectsDialog, SnapshotDi
 from .entry_list import EntryList
 from .modebar import ModeBar
 from .navbar import NavBar
+from .safe_after import cancel_all_after
 from .skipped_dialog import SkippedDialog
 from .system import reveal_in_file_manager
 from .toolbar import Toolbar
@@ -72,6 +73,10 @@ class App(tk.Tk):
     @stack.setter
     def stack(self, value: List[Crumb]) -> None:
         self._stacks["change" if self.mode == "change" else "normal"] = value
+
+    def destroy(self) -> None:
+        cancel_all_after(self)       # voir safe_after : des minuteurs orphelins font planter Tk sous macOS
+        super().destroy()
 
     # -- construction --
     def _set_icon(self) -> None:

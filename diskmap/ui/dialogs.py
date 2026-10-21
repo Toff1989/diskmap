@@ -16,6 +16,7 @@ from ..core.cleanup import SAFE, SAFETY_LABEL
 from ..core.projects import summarize
 from . import theme
 from .removal_dialog import RemovalDialog, action_label
+from .safe_after import SafeAfter
 from .system import reveal_in_file_manager
 from .text import shorten_middle
 
@@ -89,7 +90,7 @@ class SnapshotDialog(tk.Toplevel):
             self.destroy()
 
 
-class DuplicatesDialog(tk.Toplevel):
+class DuplicatesDialog(SafeAfter, tk.Toplevel):
     SIZES = (("100 Ko", 100 << 10), ("1 Mo", 1 << 20), ("10 Mo", 10 << 20), ("100 Mo", 100 << 20))
 
     def __init__(self, master: tk.Misc, path: str, on_highlight: Callable[[Dict[str, str]], None]) -> None:
