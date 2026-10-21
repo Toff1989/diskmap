@@ -85,6 +85,17 @@ def is_cloud_only(st: os.stat_result) -> bool:
     return bool(getattr(st, "st_file_attributes", 0) & _CLOUD_ONLY)
 
 
+def is_windows_link(st: os.stat_result) -> bool:
+    """Vrai pour une jonction ou un lien symbolique Windows (alias : l'espace est compté ailleurs).
+
+    Les autres points d'analyse (dossiers cloud OneDrive, déduplication…) sont de vrais dossiers.
+    """
+    if not getattr(st, "st_file_attributes", 0) & _REPARSE_POINT:
+        return False
+    tag = getattr(st, "st_reparse_tag", None)
+    return tag is None or tag in (_TAG_MOUNT_POINT, _TAG_SYMLINK)
+
+
 class Scanner:
     """Analyse un chemin. Utilisable depuis un thread : ``cancel()`` est thread-safe."""
 
@@ -191,11 +202,7 @@ class Scanner:
             return "excluded", ""
         st = entry.stat(follow_symlinks=False)
         if IS_WIN:
-            if getattr(st, "st_file_attributes", 0) & _REPARSE_POINT:
-                tag = getattr(st, "st_reparse_tag", None)
-                if tag is None or tag in (_TAG_MOUNT_POINT, _TAG_SYMLINK):
-                    return "junction", _readlink(entry.path)
-            return "", ""
+            return ("junction", _readlink(entry.path)) if is_windows_link(st) else ("", "")
         if not self.cross_devices and st.st_dev != self._dev:
             return "device", ""
         return "", ""

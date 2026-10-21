@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple
 
-from .scanner import DEFAULT_SKIP, ScanCancelled
+from .scanner import DEFAULT_SKIP, ScanCancelled, is_cloud_only, is_windows_link
 
 PARTIAL = 64 * 1024
 CHUNK = 1024 * 1024
@@ -72,6 +72,12 @@ class DuplicateFinder:
         if self._cancelled:
             raise ScanCancelled()
 
+    def _should_descend(self, entry: "os.DirEntry[str]", dev: int) -> bool:
+        st = entry.stat(follow_symlinks=False)
+        if os.name == "nt":  # st_dev vaut toujours 0 ici : on écarte seulement jonctions et liens
+            return not is_windows_link(st)
+        return self.cross_devices or st.st_dev == dev
+
     def find(self, path: str) -> DupResult:
         t0 = time.time()
         path = os.path.abspath(os.path.expanduser(path))
@@ -90,14 +96,16 @@ class DuplicateFinder:
                             if e.is_symlink() or e.path in self.skip:
                                 continue
                             if e.is_dir(follow_symlinks=False):
-                                if self.cross_devices or e.stat(follow_symlinks=False).st_dev == dev:
+                                if self._should_descend(e, dev):
                                     stack.append(e.path)
                                 continue
                             st = e.stat(follow_symlinks=False)
+                            self.files += 1
+                            if st.st_size < self.min_size or is_cloud_only(st):
+                                continue  # fichier « en ligne seulement » : le lire le téléchargerait
+                            if st.st_ino == 0:  # Windows : DirEntry.stat() ne renseigne ni inode ni périphérique
+                                st = os.stat(e.path)
                         except OSError:
-                            continue
-                        self.files += 1
-                        if st.st_size < self.min_size:
                             continue
                         if st.st_ino:
                             key = (st.st_dev, st.st_ino)

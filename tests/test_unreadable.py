@@ -56,6 +56,16 @@ def test_compact_never_merges_unreadable_block():
     assert any(c.unreadable for c in root.children)
 
 
+def test_duplicates_never_read_cloud_only_files(tmp_path, monkeypatch):
+    """Lire un placeholder OneDrive le téléchargerait : il doit être ignoré par la recherche de doublons."""
+    from diskmap.core import DuplicateFinder, duplicates
+
+    (tmp_path / "a.bin").write_bytes(b"A" * 5000)
+    (tmp_path / "b.bin").write_bytes(b"A" * 5000)
+    monkeypatch.setattr(duplicates, "is_cloud_only", lambda st: True)
+    assert DuplicateFinder(min_size=1000).find(str(tmp_path)).groups == []
+
+
 def test_symlink_is_reported_not_followed(tmp_path):
     target = tmp_path / "real"
     target.mkdir()
