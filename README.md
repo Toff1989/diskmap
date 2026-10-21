@@ -1,7 +1,7 @@
 # DiskMap
 
 [![Tests](https://github.com/Toff1989/diskmap/actions/workflows/tests.yml/badge.svg)](https://github.com/Toff1989/diskmap/actions/workflows/tests.yml)
-[![Release](https://img.shields.io/github/v/release/Toff1989/diskmap?color=3b6fd4)](https://github.com/Toff1989/diskmap/releases/latest)
+[![Release](https://img.shields.io/github/v/release/Toff1989/diskmap?sort=semver&color=3b6fd4)](https://github.com/Toff1989/diskmap/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.8%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20Linux-555)](#télécharger)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
