@@ -105,7 +105,8 @@ class RemovalDialog(tk.Toplevel):
         self.bar = bar
         self.cancel_btn.focus_set()               # le bouton par défaut est le plus sûr
         self.bind("<Escape>", lambda e: self._cancel_clicked())
-        self.after(60, self._grab)
+        self._grab_job: Optional[str] = self.after(60, self._grab)
+        self._poll_job: Optional[str] = None
 
     def _show_full_path(self, _event: Optional[tk.Event] = None) -> None:
         sel = self.tree.selection()
@@ -121,6 +122,9 @@ class RemovalDialog(tk.Toplevel):
             self.full_path.configure(text=text)
 
     def _grab(self) -> None:
+        self._grab_job = None
+        if not self.winfo_exists():
+            return
         try:
             self.grab_set()
         except tk.TclError:
@@ -144,7 +148,7 @@ class RemovalDialog(tk.Toplevel):
         self.status.pack(fill="x", before=self.bar)
         self.progress.start(12)
         self._thread.start()
-        self.after(POLL_MS, self._poll)
+        self._poll_job = self.after(POLL_MS, self._poll)
 
     def _poll(self) -> None:
         try:
@@ -154,8 +158,9 @@ class RemovalDialog(tk.Toplevel):
                 cur = self._remover.current
                 cur = cur if len(cur) <= 90 else cur[:40] + "…" + cur[-48:]
                 self.status.configure(text="%s libérés · %s" % (human_size(self._remover.freed), cur))
-            self.after(POLL_MS, self._poll)
+            self._poll_job = self.after(POLL_MS, self._poll)
             return
+        self._poll_job = None
         self.progress.stop()
         self.progress.pack_forget()
         if kind == "error":
@@ -204,16 +209,29 @@ class RemovalDialog(tk.Toplevel):
                 self._remover.cancel()
             self.cancel_btn.configure(state="disabled", text="Interruption…")
         else:
-            self.destroy()
+            self._destroy_safely()
 
     def _close_request(self) -> None:
         self._cancel_clicked()
 
     def _close(self) -> None:
         changed = any(o.freed or o.ok for o in self._outcomes)
+        self._destroy_safely()
+        self._on_finished(changed)
+
+    def _destroy_safely(self) -> None:
+        """Libère la prise de focus modale et annule les callbacks différées AVANT de détruire la fenêtre :
+        détruire une fenêtre qui détient un grab (ou laisser un « after » partir ensuite) peut faire
+        abattre le processus par Tk sous macOS."""
+        for job in (self._grab_job, self._poll_job):
+            if job:
+                try:
+                    self.after_cancel(job)
+                except tk.TclError:
+                    pass
+        self._grab_job = self._poll_job = None
         try:
             self.grab_release()
         except tk.TclError:
             pass
         self.destroy()
-        self._on_finished(changed)

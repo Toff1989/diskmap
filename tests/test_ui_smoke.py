@@ -19,6 +19,10 @@ def app(tmp_path, monkeypatch):
     a.geometry("1000x700")
     yield a
     a.destroy()
+    # Les objets Tk détruits doivent être finalisés par CE thread : si le ramasse-miettes s'en chargeait depuis
+    # un thread de travail, chaque appel Tk y attendrait ~1 s (« main thread is not in main loop »).
+    import gc
+    gc.collect()
 
 
 def _tree(tmp_path):
@@ -77,11 +81,17 @@ def _node_modules_plan(tmp_path):
 
 
 def _wait(app, dialog, seconds=15):
+    import gc
     import time
-    end = time.time() + seconds
-    while not dialog._finished and time.time() < end:
-        app.update()
-        time.sleep(0.02)
+    gc.collect()
+    gc.disable()          # aucun ramasse-miettes pendant que le thread de suppression tourne
+    try:
+        end = time.time() + seconds
+        while not dialog._finished and time.time() < end:
+            app.update()
+            time.sleep(0.02)
+    finally:
+        gc.enable()
     assert dialog._finished, "la suppression ne s'est pas terminée"
 
 
