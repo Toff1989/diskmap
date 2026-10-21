@@ -4,8 +4,6 @@
 [![Release](https://img.shields.io/github/v/release/Toff1989/diskmap?color=3b6fd4)](https://github.com/Toff1989/diskmap/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.8%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20Linux-555)](#télécharger)
-[![Dépendances](https://img.shields.io/badge/d%C3%A9pendances-aucune-brightgreen)](#lancer-depuis-les-sources)
-[![Suppression](https://img.shields.io/badge/suppression-sur%20confirmation-b3261e)](#suppression-toujours-sur-confirmation)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
 **Vois d'un coup d'œil ce qui remplit ton disque.** DiskMap analyse un disque ou un dossier et l'affiche
