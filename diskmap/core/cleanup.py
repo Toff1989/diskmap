@@ -1,6 +1,7 @@
 """Catalogue de nettoyage : reconnaît caches et dossiers régénérables, évalue le risque.
 
-DiskMap ne supprime jamais rien : il explique, classe et propose la commande sûre.
+Ce module ne fait que classer et expliquer. La suppression elle-même, strictement encadrée et soumise à une
+confirmation explicite, est dans ``removal.py``.
 """
 from __future__ import annotations
 

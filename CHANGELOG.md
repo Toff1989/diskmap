@@ -15,6 +15,19 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
   sont ignorés. Chaque groupe est surligné sur la carte, avec l'espace récupérable.
 - **« Que supprimer ? »** : catalogue de caches et de dossiers régénérables (`node_modules`, `__pycache__`,
   DerivedData, Docker, Windows Update…) classés par espace et par sécurité, avec explication et commande conseillée.
+- **Suppression sur confirmation explicite**, uniquement depuis « Que supprimer ? » (jamais depuis la carte,
+  les doublons ni les fichiers froids) : sélection multiple, fenêtre de confirmation listant les cibles et les
+  commandes exactes, bouton rouge inactif tant que la case « définitive » n'est pas cochée.
+  - Liste blanche : seuls les éléments reconnus du catalogue sont supprimables ; machines virtuelles, WSL,
+    `Windows.old` et mises à jour Windows restent manuels.
+  - Commandes officielles quand l'outil existe (`npm cache clean --force`, `pip cache purge`,
+    `dotnet nuget locals all --clear`, `docker system prune -f`, corbeille Windows, `apt-get clean`…), lancées
+    sans shell ; repli sur la suppression du dossier si l'outil est absent ; droits administrateur exigés quand
+    il le faut.
+  - Garde-fous revérifiés juste avant d'agir : dans le dossier analysé, ni lien ni jonction (leur cible n'est
+    jamais touchée), ni dossier protégé, règle toujours valide. Chemins longs Windows et fichiers en
+    lecture seule gérés.
+  - Journal `~/.diskmap/removals.log`, résultat ligne par ligne, réanalyse automatique ensuite.
 - **Fichiers froids** : carte colorée par ancienneté et liste des plus gros éléments intouchés depuis 1, 2 ou 5 ans.
 - **Surveillance en direct** du dossier affiché (réanalyse toutes les 5 à 60 s, ce qui grossit est entouré).
 - **Projets de code** : sources, dépôt Git, dépendances et builds par projet (Node, Python, Rust, Go, Java, .NET…).
@@ -24,6 +37,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 - Icône d'application partout : fenêtre, barre des tâches, Alt-Tab, exécutable, installeur, `.app`, paquet Linux.
 - Tests de l'interface (fumée) et tests du cœur v2 ; CI de tests sur chaque push et pull request
   (Linux avec Python 3.8 et 3.12, Windows, macOS).
+
+### Modifié
+- DiskMap n'est plus strictement en lecture seule : la suppression existe, mais uniquement sur confirmation
+  explicite depuis « Que supprimer ? » (voir ci-dessus).
+- Les chemins longs sont tronqués au milieu dans « Que supprimer ? » (la fin d'un chemin est la partie utile)
+  et le chemin complet de la sélection est affiché.
 
 ### Corrigé
 - Windows : la recherche de doublons ne descendait pas dans les sous-dossiers et ne détectait pas les liens

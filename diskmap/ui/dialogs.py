@@ -8,19 +8,24 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from ..core import (ColdEntry, DupResult, DuplicateFinder, Finding, ProjectInfo, ScanCancelled,
-                    SnapshotInfo, human_size)
+from tkinter import messagebox
+
+from ..core import (ColdEntry, DupResult, DuplicateFinder, Finding, Plan, ProjectInfo, ScanCancelled,
+                    SnapshotInfo, human_size, plan_removal)
 from ..core.cleanup import SAFE, SAFETY_LABEL
 from ..core.projects import summarize
 from . import theme
+from .removal_dialog import RemovalDialog, action_label
 from .system import reveal_in_file_manager
+from .text import shorten_middle
 
 
-def _tree(parent: tk.Misc, columns: Sequence[Tuple[str, str, int, str]], first: Tuple[str, int]) -> ttk.Treeview:
+def _tree(parent: tk.Misc, columns: Sequence[Tuple[str, str, int, str]], first: Tuple[str, int],
+          selectmode: str = "browse") -> ttk.Treeview:
     """Treeview + barre de défilement. ``columns`` : (id, titre, largeur, ancrage)."""
     frame = ttk.Frame(parent)
     frame.pack(fill="both", expand=True)
-    tree = ttk.Treeview(frame, columns=[c[0] for c in columns], selectmode="browse")
+    tree = ttk.Treeview(frame, columns=[c[0] for c in columns], selectmode=selectmode)
     tree.heading("#0", text=first[0])
     tree.column("#0", width=first[1])
     for cid, title, width, anchor in columns:
@@ -118,7 +123,7 @@ class DuplicatesDialog(tk.Toplevel):
         self.light = ttk.Button(bar, text="Surligner sur la carte", command=self._highlight, state="disabled")
         self.light.pack(side="left")
         ttk.Button(bar, text="Effacer le surlignage", command=lambda: on_highlight({})).pack(side="left", padx=6)
-        ttk.Label(bar, text="Double-clic : ouvrir l'emplacement · DiskMap ne supprime rien.",
+        ttk.Label(bar, text="Double-clic : ouvrir l'emplacement · cette fenêtre ne supprime rien.",
                   style="Dim.TLabel").pack(side="right")
         self.protocol("WM_DELETE_WINDOW", self._close)
         self.after(120, self._poll)
@@ -200,43 +205,55 @@ class DuplicatesDialog(tk.Toplevel):
 
 
 class CleanupDialog(tk.Toplevel):
-    """Gains rapides (catalogue) et fichiers froids. Aucune suppression : conseils seulement."""
+    """Gains rapides (catalogue, avec suppression sur confirmation explicite) et fichiers froids (lecture seule).
+
+    C'est le SEUL endroit de DiskMap d'où l'on peut supprimer quoi que ce soit.
+    """
 
     AGES = (("1 an", 365), ("2 ans", 730), ("5 ans", 1825))
     SIZES = (("1 Mo", 1 << 20), ("10 Mo", 10 << 20), ("100 Mo", 100 << 20))
 
     def __init__(self, master: tk.Misc, findings: List[Finding],
                  cold_fn: Callable[[int, int], List[ColdEntry]],
-                 on_goto: Callable[[str], None]) -> None:
+                 on_goto: Callable[[str], None], scan_root: str = "",
+                 on_removed: Optional[Callable[[], None]] = None, is_admin: bool = False) -> None:
         super().__init__(master, bg=theme.BG2)
         self.title("Que supprimer ?")
-        self.geometry("1020x640")
+        self.geometry("1100x680")
         self.transient(master)
         self._findings, self._cold_fn, self._on_goto = findings, cold_fn, on_goto
+        self._scan_root, self._on_removed = scan_root, on_removed
+        self._plans: List[Plan] = [plan_removal(f, scan_root, is_admin) if scan_root else
+                                   Plan(f, "none", "Action manuelle", blocked="aucun dossier d'analyse")
+                                   for f in findings]
         self._cold: List[ColdEntry] = []
 
         safe = sum(f.size for f in findings if f.rule.safety == SAFE)
         total = sum(f.size for f in findings)
         ttk.Label(self, padding=10, justify="left", text=(
             "Récupérable sans risque : %s  ·  Total des candidats : %s.\n"
-            "DiskMap ne supprime rien : il t'explique et te donne la commande ou le geste recommandé."
+            "Sélectionne des lignes (Ctrl/Maj pour plusieurs) puis « Supprimer… » : une fenêtre de "
+            "confirmation montrera exactement ce qui sera effacé. Rien n'est supprimé sans ton accord."
             % (human_size(safe), human_size(total)))).pack(fill="x")
         nb = ttk.Notebook(self)
         nb.pack(fill="both", expand=True, padx=10)
 
         tab1 = ttk.Frame(nb)
         nb.add(tab1, text="Gains rapides (%d)" % len(findings))
-        self.tree = _tree(tab1, [("kind", "Nature", 220, "w"), ("size", "Taille", 80, "e"),
-                                 ("risk", "Risque", 90, "w"), ("regen", "Régénérable", 90, "w")],
-                          ("Dossier", 430))
+        self.tree = _tree(tab1, [("kind", "Nature", 200, "w"), ("size", "Taille", 80, "e"),
+                                 ("risk", "Risque", 80, "w"), ("regen", "Régénérable", 90, "w"),
+                                 ("action", "Action", 80, "w")],
+                          ("Dossier", 400), selectmode="extended")
         for i, f in enumerate(findings):
-            self.tree.insert("", "end", iid=str(i), text=f.path,
+            plan = self._plans[i]
+            self.tree.insert("", "end", iid=str(i), text=shorten_middle(f.path, 56),
                              values=(f.rule.label, human_size(f.size), SAFETY_LABEL[f.rule.safety],
-                                     "oui" if f.rule.regenerable else "non"))
+                                     "oui" if f.rule.regenerable else "non",
+                                     action_label(plan) if plan.runnable else "Manuel"))
         self.tree.bind("<<TreeviewSelect>>", lambda e: self._detail())
         self.tree.bind("<Double-1>", lambda e: self._goto(self.tree, lambda i: findings[i].path))
         self.detail = tk.Label(tab1, bg=theme.BG3, fg=theme.FG, justify="left", anchor="nw", wraplength=940,
-                               padx=10, pady=8, height=5, text="Sélectionne une ligne pour l'explication.")
+                               padx=10, pady=8, height=7, text="Sélectionne une ligne pour l'explication.")
         self.detail.pack(fill="x", pady=(6, 0))
         bar1 = ttk.Frame(tab1)
         bar1.pack(fill="x", pady=6)
@@ -245,6 +262,9 @@ class CleanupDialog(tk.Toplevel):
         ttk.Button(bar1, text="Copier la commande", command=self._copy_cmd).pack(side="left", padx=6)
         ttk.Button(bar1, text="Ouvrir l'emplacement",
                    command=lambda: self._with(self.tree, lambda i: _reveal(findings[i].path))).pack(side="left")
+        self.remove_btn = ttk.Button(bar1, text="Supprimer…", style="Danger.TButton", command=self._remove)
+        self.remove_btn.pack(side="right")
+        ttk.Button(bar1, text="Sélectionner les éléments sûrs", command=self._select_safe).pack(side="right", padx=6)
 
         tab2 = ttk.Frame(nb)
         nb.add(tab2, text="Fichiers froids")
@@ -266,7 +286,8 @@ class CleanupDialog(tk.Toplevel):
         for var in (self.age_var, self.csize_var):
             var.trace_add("write", lambda *a: self._fill_cold())
         ttk.Label(self, text="Double-clic : montrer sur la carte. Seuls les éléments visibles dans la carte "
-                             "(après regroupement des petits éléments) sont analysés.",
+                             "(après regroupement des petits éléments) sont analysés. Les fichiers froids sont "
+                             "tes données : DiskMap ne les supprime jamais.",
                   style="Dim.TLabel", padding=10).pack(anchor="w")
         self._fill_cold()
 
@@ -275,11 +296,34 @@ class CleanupDialog(tk.Toplevel):
         sel = self.tree.selection()
         if not sel:
             return
-        f = self._findings[int(sel[0])]
-        text = "%s — %s\n%s" % (f.rule.label, SAFETY_LABEL[f.rule.safety], f.rule.why)
+        i = int(sel[0])
+        f, plan = self._findings[i], self._plans[i]
+        text = "%s — %s\n%s\nChemin :  %s" % (f.rule.label, SAFETY_LABEL[f.rule.safety], f.rule.why, f.path)
         if f.rule.how:
             text += "\nCommande / geste conseillé :  " + f.rule.how
+        text += "\nAction DiskMap :  " + (plan.summary if plan.runnable else "aucune — " + plan.detail)
         self.detail.configure(text=text)
+
+    def _select_safe(self) -> None:
+        ids = [str(i) for i, f in enumerate(self._findings)
+               if f.rule.safety == SAFE and self._plans[i].runnable]
+        self.tree.selection_set(ids)
+
+    def _remove(self) -> None:
+        chosen = [self._plans[int(i)] for i in self.tree.selection()]
+        if not chosen:
+            messagebox.showinfo("Que supprimer ?", "Sélectionne d'abord une ou plusieurs lignes.", parent=self)
+            return
+        if not any(p.runnable for p in chosen):
+            messagebox.showinfo("Que supprimer ?", "DiskMap ne peut rien supprimer dans cette sélection :\n\n"
+                                + "\n".join("• " + p.detail for p in chosen[:5]), parent=self)
+            return
+        RemovalDialog(self, chosen, self._scan_root, self._removal_finished)
+
+    def _removal_finished(self, changed: bool) -> None:
+        if changed and self._on_removed:
+            self.destroy()
+            self._on_removed()
 
     def _copy_cmd(self) -> None:
         def go(i: int) -> None:

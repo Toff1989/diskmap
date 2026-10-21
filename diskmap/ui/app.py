@@ -33,6 +33,7 @@ ASSETS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))
 class App(tk.Tk):
     def __init__(self, start_path: Optional[str] = None, admin: bool = False) -> None:
         super().__init__()
+        self.admin = admin
         self.title("DiskMap (administrateur)" if admin else "DiskMap")
         self.geometry("1280x800")
         self.minsize(800, 500)
@@ -141,14 +142,16 @@ class App(tk.Tk):
 
         t = tk.Menu(bar, tearoff=0)
         t.add_command(label="Doublons…", command=self.show_duplicates)
-        t.add_command(label="Que supprimer ? (gains rapides, fichiers froids)…", command=self.show_cleanup)
+        t.add_command(label="Que supprimer ? (gains rapides, suppression sur confirmation)…",
+                      command=self.show_cleanup)
         t.add_command(label="Projets de code…", command=self.show_projects)
         bar.add_cascade(label="Outils", menu=t)
 
         h = tk.Menu(bar, tearoff=0)
         h.add_command(label="À propos de DiskMap", command=lambda: messagebox.showinfo(
             "DiskMap", "DiskMap %s\nAnalyseur d'espace disque avec treemap.\n"
-                       "Ne supprime ni ne modifie jamais aucun fichier." % __version__))
+                       "Ne supprime jamais rien sans ta confirmation explicite : la suppression n'existe que "
+                       "dans « Outils › Que supprimer ? »." % __version__))
         bar.add_cascade(label="Aide", menu=h)
         self.configure(menu=bar)
 
@@ -454,7 +457,8 @@ class App(tk.Tk):
             return
         r = self.result
         CleanupDialog(self, find_cleanup(r.root, r.path),
-                      lambda days, size: find_cold(r.root, r.path, days, size), self.goto_path)
+                      lambda days, size: find_cold(r.root, r.path, days, size), self.goto_path,
+                      scan_root=r.path, on_removed=lambda: self.start_scan(r.path), is_admin=self.admin)
 
     def show_projects(self) -> None:
         if not self._need_result():

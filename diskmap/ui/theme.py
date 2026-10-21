@@ -10,6 +10,7 @@ ACCENT, ACCENT_HOVER = "#3b6fd4", "#4f84ea"
 LINK = "#7fb0ff"
 SELECTION = "#ffd24a"
 GROUPED = "#3a3a3a"
+DANGER, DANGER_HOVER = "#b3261e", "#d13b32"
 UNREADABLE = "#6b3d3d"
 FONT = ("Segoe UI", 9)
 
@@ -82,6 +83,9 @@ def apply(root: tk.Misc) -> None:
           foreground=[("disabled", FG_DIM)])
     s.configure("Accent.TButton", background=ACCENT)
     s.map("Accent.TButton", background=[("active", ACCENT_HOVER), ("disabled", BG2)])
+    s.configure("Danger.TButton", background=DANGER, foreground="#fff")
+    s.map("Danger.TButton", background=[("active", DANGER_HOVER), ("disabled", BG2)],
+          foreground=[("disabled", FG_DIM)])
     s.configure("Crumb.TButton", padding=(6, 2), background=BG, foreground=LINK)
     s.map("Crumb.TButton", background=[("active", BG3)])
     s.configure("TCombobox", fieldbackground=BG3, background=BG3, foreground=FG,

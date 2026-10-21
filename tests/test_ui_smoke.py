@@ -14,8 +14,8 @@ def app(tmp_path, monkeypatch):
     try:
         from diskmap.ui.app import App
         a = App()
-    except tk.TclError:
-        pytest.skip("pas d'affichage")
+    except tk.TclError as exc:
+        pytest.skip("pas d'affichage : %s" % exc)
     a.geometry("1000x700")
     yield a
     a.destroy()
@@ -66,6 +66,86 @@ def test_live_updates_subtree(app, tmp_path):
     app.update()
     assert app.result.root.size >= old + 400_000
     assert any(p.endswith("grow.bin") for p in app.view._growth)
+
+
+def _node_modules_plan(tmp_path):
+    from diskmap.core import find_cleanup, plan_removal
+    root = _tree(tmp_path)
+    res = Scanner().scan(str(root))
+    finding = next(f for f in find_cleanup(res.root, str(root), min_size=1) if f.rule.id == "node_modules")
+    return root, res, finding, plan_removal(finding, str(root))
+
+
+def _wait(app, dialog, seconds=15):
+    import time
+    end = time.time() + seconds
+    while not dialog._finished and time.time() < end:
+        app.update()
+        time.sleep(0.02)
+    assert dialog._finished, "la suppression ne s'est pas terminée"
+
+
+def test_removal_needs_explicit_confirmation_before_anything_is_deleted(app, tmp_path):
+    from diskmap.ui.removal_dialog import RemovalDialog
+    root, _res, finding, plan = _node_modules_plan(tmp_path)
+    done = []
+    dlg = RemovalDialog(app, [plan], str(root), done.append)
+    app.update()
+    assert str(dlg.go_btn.cget("state")) == "disabled"        # case non cochée : bouton rouge inactif
+    dlg._start()                                              # même appelé de force, rien ne doit partir
+    app.update()
+    assert dlg._thread is None and os.path.isdir(finding.path)
+    dlg.confirm_var.set(True)
+    dlg._sync()
+    assert str(dlg.go_btn.cget("state")) == "normal"
+    dlg._start()
+    _wait(app, dlg)
+    assert not os.path.exists(finding.path) and (root / "a.bin").exists()
+    dlg._close()
+    assert done == [True]
+
+
+def test_closing_the_confirmation_without_confirming_deletes_nothing(app, tmp_path):
+    from diskmap.ui.removal_dialog import RemovalDialog
+    root, _res, finding, plan = _node_modules_plan(tmp_path)
+    done = []
+    dlg = RemovalDialog(app, [plan], str(root), done.append)
+    app.update()
+    dlg._cancel_clicked()
+    app.update()
+    assert os.path.isdir(finding.path) and done == []
+
+
+def test_blocked_items_are_listed_but_never_executed(app, tmp_path):
+    import dataclasses
+    from diskmap.ui.removal_dialog import RemovalDialog
+    root, _res, finding, plan = _node_modules_plan(tmp_path)
+    blocked = dataclasses.replace(plan, blocked="refusé pour le test")
+    dlg = RemovalDialog(app, [blocked], str(root), lambda changed: None)
+    app.update()
+    dlg.confirm_var.set(True)
+    dlg._sync()
+    assert str(dlg.go_btn.cget("state")) == "disabled"        # rien d'exécutable : jamais de bouton actif
+    assert os.path.isdir(finding.path)
+
+
+def test_cleanup_dialog_only_offers_runnable_items_and_opens_confirmation(app, tmp_path, monkeypatch):
+    from diskmap.ui import dialogs
+    root, res, finding, _plan = _node_modules_plan(tmp_path)
+    opened, infos = [], []
+    monkeypatch.setattr(dialogs, "RemovalDialog", lambda *a, **k: opened.append(a))
+    monkeypatch.setattr(dialogs.messagebox, "showinfo", lambda *a, **k: infos.append(a))
+    from diskmap.core import find_cleanup
+    dlg = dialogs.CleanupDialog(app, find_cleanup(res.root, str(root), min_size=1), lambda d, s: [],
+                                lambda p: None, scan_root=str(root), on_removed=lambda: None)
+    app.update()
+    dlg._remove()                                             # rien de sélectionné
+    assert infos and not opened
+    dlg._select_safe()
+    assert dlg.tree.selection()
+    dlg._remove()
+    assert len(opened) == 1 and opened[0][1][0].finding.path == finding.path   # la confirmation s'ouvre ; rien n'est effacé
+    assert os.path.isdir(finding.path)
 
 
 def test_goto_path_and_dialogs(app, tmp_path):

@@ -10,6 +10,7 @@ from .formatting import human_size, signed_size
 from .models import Node, ScanResult, SkipEntry
 from .projects import ProjectInfo, find_projects
 from .scanner import Scanner, ScanCancelled
+from .removal import Outcome, Plan, Remover, plan_removal
 from .snapshot import SnapshotInfo, list_snapshots, load_snapshot, save_snapshot
 from .tree import find_chain, join, walk
 from .treemap import squarify
@@ -19,4 +20,5 @@ __all__ = ["Node", "ScanResult", "SkipEntry", "Scanner", "ScanCancelled", "squar
            "BUCKETS", "age_bucket", "ColdEntry", "Finding", "Rule", "classify", "find_cleanup",
            "find_cold", "diff_trees", "growth_map", "DupGroup", "DupResult", "DuplicateFinder",
            "export_html", "ProjectInfo", "find_projects", "SnapshotInfo", "list_snapshots",
-           "load_snapshot", "save_snapshot", "find_chain", "join", "walk"]
+           "load_snapshot", "save_snapshot", "find_chain", "join", "walk",
+           "Outcome", "Plan", "Remover", "plan_removal"]
