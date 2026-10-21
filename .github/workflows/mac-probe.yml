@@ -5,12 +5,13 @@ on:
 
 jobs:
   probe:
-    name: ${{ matrix.variant }}
+    name: ${{ matrix.variant }} #${{ matrix.rep }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        variant: [base, noprogress, nothread, notransient, plain]
+        variant: [base, nothread]
+        rep: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

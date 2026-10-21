@@ -150,7 +150,6 @@ class RemovalDialog(tk.Toplevel):
         self.cancel_btn.configure(text="Interrompre")
         self.progress.pack(fill="x", padx=10, before=self.bar)
         self.status.pack(fill="x", before=self.bar)
-        self.progress.start(12)
         self._thread.start()
         self._poll_job = self.after(POLL_MS, self._poll)
 
@@ -158,6 +157,8 @@ class RemovalDialog(tk.Toplevel):
         try:
             kind, value = self._queue.get_nowait()
         except queue.Empty:
+            # Pas manuel plutôt que Progressbar.start() : l'animation automatique fait abattre Tk sous macOS.
+            self.progress.step(4)
             if self._remover:
                 cur = self._remover.current
                 cur = cur if len(cur) <= 90 else cur[:40] + "…" + cur[-48:]
@@ -165,7 +166,6 @@ class RemovalDialog(tk.Toplevel):
             self._poll_job = self.after(POLL_MS, self._poll)
             return
         self._poll_job = None
-        self.progress.stop()
         self.progress.pack_forget()
         if kind == "error":
             self.status.configure(text="Erreur inattendue : %s" % value)

@@ -183,7 +183,6 @@ class App(tk.Tk):
         if purpose != "live":
             self.toolbar.set_busy(True)
             self.progress.pack(fill="x", side="bottom", before=self.status)
-            self.progress.start(12)
         auto = bool(self.auto_snap.get())
         self._thread = threading.Thread(target=self._run_scan, daemon=True,
                                         args=(self._scanner, path, purpose, target, auto))
@@ -224,7 +223,6 @@ class App(tk.Tk):
             kind = purpose = value = None
         if kind:
             if purpose != "live":
-                self.progress.stop()
                 self.progress.pack_forget()
                 self.toolbar.set_busy(False)
             if kind == "done":
@@ -236,6 +234,9 @@ class App(tk.Tk):
             elif purpose != "live":
                 messagebox.showerror("DiskMap", "Erreur pendant l'analyse :\n%s" % value)
         elif self._scanning_visible() and self._scanner:
+            # Pas manuel plutôt que Progressbar.start() : l'animation automatique laisse un minuteur Tcl qui fait
+            # abattre Tk sous macOS (observé en CI).
+            self.progress.step(4)
             cur = self._scanner.current
             if len(cur) > 90:
                 cur = cur[:40] + "…" + cur[-48:]
