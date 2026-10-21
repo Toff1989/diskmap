@@ -13,7 +13,7 @@ _MARKERS = {
     "build.gradle": "Java", "build.gradle.kts": "Java", "composer.json": "PHP", "gemfile": "Ruby",
     "cmakelists.txt": "C/C++", "pubspec.yaml": "Dart", "package.swift": "Swift", ".git": "Git",
 }
-_SUFFIX_MARKERS = {".csproj": ".NET", ".sln": ".NET", ".xcodeproj": "Xcode"}
+_SUFFIX_MARKERS = {".csproj": ".NET", ".sln": ".NET"}
 
 # Dossiers de dépendances ou de produits de compilation (régénérables).
 DEPS_DIRS = {

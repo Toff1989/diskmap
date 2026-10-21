@@ -12,7 +12,6 @@ from .projects import project_kind
 from .explain import OTHER_NOTE, SMALL_NOTE, UNREADABLE_NAME, UNREADABLE_NOTE
 
 IS_WIN = os.name == "nt"
-IS_MAC = sys.platform == "darwin"
 
 MAX_KIDS = 300         # éléments gardés par dossier pendant le scan (mémoire)
 MAX_DEPTH = 12         # profondeur maximale conservée
@@ -21,8 +20,6 @@ MAX_SKIPPED = 5000     # taille maximale de la liste des dossiers ignorés
 
 if sys.platform.startswith("linux"):
     DEFAULT_SKIP: Set[str] = {"/proc", "/sys", "/dev", "/run"}
-elif IS_MAC:
-    DEFAULT_SKIP = {"/Volumes", "/System/Volumes", "/dev", "/private/var/vm"}
 else:
     DEFAULT_SKIP = set()
 
@@ -118,8 +115,6 @@ class Scanner:
         path = os.path.abspath(os.path.expanduser(path))
         t0 = time.time()
         self._dev = os.stat(path).st_dev
-        if IS_MAC and path == "/":
-            self.cross_devices = True
         root = self._scan_dir(path, path, 0)
         try:
             du = shutil.disk_usage(path)

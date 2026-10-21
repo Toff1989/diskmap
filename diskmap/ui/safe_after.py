@@ -1,7 +1,7 @@
 """Annulation des callbacks ``after()`` en attente quand une fenêtre est détruite.
 
 Sans cela, un minuteur planifié par une fenêtre déjà détruite tire plus tard avec une commande Tcl supprimée
-(« invalid command name … ("after" script) »). Sous macOS cette erreur de fond fait planter Tk, souvent pendant
+(« invalid command name … ("after" script) »). Cette erreur de fond peut faire planter Tk, souvent pendant
 l'``update()`` d'une AUTRE fenêtre, car la file des minuteurs est partagée par le thread.
 """
 from __future__ import annotations

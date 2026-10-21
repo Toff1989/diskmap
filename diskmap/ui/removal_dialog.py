@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import queue
-import sys
 import threading
 import tkinter as tk
 from tkinter import ttk
@@ -126,9 +125,7 @@ class RemovalDialog(SafeAfter, tk.Toplevel):
 
     def _grab(self) -> None:
         self._grab_job = None
-        # Pas de grab sous macOS : avec Tk il y fait abattre le processus (Abort trap observé en CI). La
-        # fenêtre de « Que supprimer ? » empêche déjà d'en ouvrir une seconde tant que celle-ci existe.
-        if sys.platform == "darwin" or not self.winfo_exists():
+        if not self.winfo_exists():
             return
         try:
             self.grab_set()
@@ -158,7 +155,7 @@ class RemovalDialog(SafeAfter, tk.Toplevel):
         try:
             kind, value = self._queue.get_nowait()
         except queue.Empty:
-            # Pas manuel plutôt que Progressbar.start() : l'animation automatique fait abattre Tk sous macOS.
+            # Pas manuel plutôt que Progressbar.start() : l'animation automatique laisse un minuteur Tcl actif.
             self.progress.step(4)
             if self._remover:
                 cur = self._remover.current
@@ -227,7 +224,7 @@ class RemovalDialog(SafeAfter, tk.Toplevel):
     def _destroy_safely(self) -> None:
         """Libère la prise de focus modale et annule les callbacks différées AVANT de détruire la fenêtre :
         détruire une fenêtre qui détient un grab (ou laisser un « after » partir ensuite) peut faire
-        abattre le processus par Tk sous macOS."""
+        faire planter Tk."""
         for job in (self._grab_job, self._poll_job):
             if job:
                 try:

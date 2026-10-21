@@ -3,13 +3,13 @@
 [![Tests](https://github.com/Toff1989/diskmap/actions/workflows/tests.yml/badge.svg)](https://github.com/Toff1989/diskmap/actions/workflows/tests.yml)
 [![Release](https://img.shields.io/github/v/release/Toff1989/diskmap?color=3b6fd4)](https://github.com/Toff1989/diskmap/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.8%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS%20%7C%20Linux-555)](#télécharger)
+[![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20Linux-555)](#télécharger)
 [![Dépendances](https://img.shields.io/badge/d%C3%A9pendances-aucune-brightgreen)](#lancer-depuis-les-sources)
 [![Suppression](https://img.shields.io/badge/suppression-sur%20confirmation-b3261e)](#suppression-toujours-sur-confirmation)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
 **Vois d'un coup d'œil ce qui remplit ton disque.** DiskMap analyse un disque ou un dossier et l'affiche
-en treemap interactive : plus un rectangle est grand, plus il pèse lourd. Windows, macOS et Linux, sans
+en treemap interactive : plus un rectangle est grand, plus il pèse lourd. Windows et Linux, sans
 aucune dépendance (interface tkinter, incluse avec Python).
 
 ![DiskMap : treemap d'un dossier, liste triée à droite, fil d'Ariane et modes de couleur](docs/screenshot.png)
@@ -21,11 +21,9 @@ Les installeurs sont dans la [dernière release](https://github.com/Toff1989/dis
 | Système | Fichier |
 |---|---|
 | Windows | `DiskMap-<version>-setup.exe` (installeur) ou `…-windows-x64.zip` (portable) |
-| macOS (Apple Silicon) | `DiskMap-<version>-macos-arm64.dmg` |
 | Linux | `diskmap_<version>_amd64.deb` ou `DiskMap-<version>-linux-x64.tar.gz` |
 
-Les exécutables ne sont pas signés : SmartScreen (Windows) peut afficher un avertissement, et sur macOS il
-faut faire clic droit › Ouvrir au premier lancement.
+Les exécutables ne sont pas signés : SmartScreen (Windows) peut afficher un avertissement.
 
 ## Lancer depuis les sources
 
@@ -40,7 +38,7 @@ Ou, après `pip install .`, la commande `diskmap`.
 
 **Windows : droits administrateur automatiques.** Au lancement, DiskMap se relance lui-même en
 administrateur (invite UAC) pour lire les dossiers protégés. Si tu refuses l'invite, il s'ouvre quand
-même, avec des droits normaux. `--no-admin` désactive la demande. Sous Linux et macOS, utilise `sudo`
+même, avec des droits normaux. `--no-admin` désactive la demande. Sous Linux, utilise `sudo`
 pour inclure les dossiers protégés.
 
 ## Utilisation
@@ -61,7 +59,7 @@ pour inclure les dossiers protégés.
 | **Machine à remonter le temps** | Analyse › Comparer à un instantané… | Un instantané compressé est enregistré après chaque analyse (`~/.diskmap/snapshots`, 30 par chemin). La carte **Changements** montre ce qui a grossi (rouge) ou rétréci (vert) ; l'analyse précédente sert de base automatiquement. |
 | **Comparer deux dossiers / disques** | Analyse › Comparer à un autre dossier… | Même carte de différences entre une source et sa sauvegarde, par exemple. |
 | **Doublons** | Outils › Doublons… | Taille, empreinte partielle, puis empreinte complète ; liens physiques ignorés. Un groupe = une couleur surlignée sur la carte, avec l'espace récupérable. |
-| **Que supprimer ?** | Outils › Que supprimer ? | Catalogue de caches et dossiers régénérables (`node_modules`, `__pycache__`, DerivedData, Docker, Windows Update…) classés par *espace × sécurité*, avec l'explication, et la possibilité de **les supprimer sur confirmation explicite** (voir ci-dessous). |
+| **Que supprimer ?** | Outils › Que supprimer ? | Catalogue de caches et dossiers régénérables (`node_modules`, `__pycache__`, Docker, Windows Update…) classés par *espace × sécurité*, avec l'explication, et la possibilité de **les supprimer sur confirmation explicite** (voir ci-dessous). |
 | **Fichiers froids** | même fenêtre, 2ᵉ onglet · Couleur › Ancienneté | Carte colorée par date de dernière modification ; liste des plus gros éléments intouchés depuis 1, 2 ou 5 ans. |
 | **Surveillance en direct** | Analyse › Surveiller le dossier affiché | Réanalyse le dossier affiché toutes les 5 à 60 s ; ce qui grossit est entouré en orange. |
 | **Projets de code** | Outils › Projets de code… | Sources / dépôt Git / dépendances et builds par projet (Node, Python, Rust, Go, Java, .NET…). |
@@ -145,7 +143,7 @@ diskmap/
   assets/            icône de la fenêtre
   elevation.py       relance en administrateur (Windows)
   __main__.py        point d'entrée (python -m diskmap)
-packaging/           scripts de build Windows / macOS / Linux
+packaging/           scripts de build Windows / Linux
 tests/               tests du cœur et de l'interface
 docs/                capture d'écran
 ```
@@ -157,7 +155,7 @@ pip install -e .[dev]
 pytest
 ```
 
-La CI exécute les tests sur Linux (Python 3.8 et 3.12), Windows et macOS à chaque push et pull request.
+La CI exécute les tests sur Linux (Python 3.8 et 3.12) et Windows à chaque push et pull request.
 Pour construire les exécutables : [packaging/README.md](packaging/README.md). L'historique des versions est
 dans le [CHANGELOG](CHANGELOG.md).
 

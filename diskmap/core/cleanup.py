@@ -63,9 +63,6 @@ _BY_NAME: Dict[str, Rule] = {
     ".next": _r("next", "Build Next.js", SAFE, "Sortie de compilation régénérée par « next build »."),
     ".nuxt": _r("nuxt", "Build Nuxt", SAFE, "Sortie de compilation régénérée par « nuxt build »."),
     ".dart_tool": _r("dart_tool", "Cache Dart/Flutter", SAFE, "Régénéré par « flutter pub get »."),
-    "deriveddata": _r("deriveddata", "Xcode DerivedData", SAFE,
-                      "Produits de compilation et index Xcode ; recréés à la prochaine compilation.",
-                      "rm -rf ~/Library/Developer/Xcode/DerivedData"),
     "_cacache": _r("npm_cache", "Cache npm", SAFE, "Archives de paquets téléchargées par npm.",
                    "npm cache clean --force"),
     "gpucache": _r("gpucache", "Cache GPU (navigateur/Electron)", SAFE, "Cache graphique recréé à la demande."),
@@ -91,7 +88,6 @@ _BY_NAME: Dict[str, Rule] = {
                        "Fichiers déjà supprimés mais pas encore effacés du disque.",
                        "Vider la corbeille", regen=False),
     ".trash": _r("trash", "Corbeille", SAFE, "Fichiers déjà supprimés.", "Vider la corbeille", regen=False),
-    ".trashes": _r("trash", "Corbeille", SAFE, "Fichiers déjà supprimés.", "Vider la corbeille", regen=False),
     "trash": _r("trash", "Corbeille", SAFE, "Fichiers déjà supprimés.", "Vider la corbeille", regen=False),
     ".cache": _r("dotcache", "Dossier de cache utilisateur", CAUTION,
                  "Caches d'applications (pip, thumbnails, navigateurs…) ; recréés mais parfois lentement."),
@@ -113,8 +109,6 @@ _BY_PROJECT: Dict[str, Dict[str, Rule]] = {
                "Go": _r("vendor_go", "Dépendances Go vendorisées", CAUTION, "Recréées par « go mod vendor ».",
                         "go mod vendor"),
                "Ruby": _r("vendor_ruby", "Gems vendorisés", SAFE, "Recréés par bundler.", "bundle install")},
-    "pods": {"Swift": _r("pods", "CocoaPods", SAFE, "Recréés par « pod install ».", "pod install"),
-             "Xcode": _r("pods", "CocoaPods", SAFE, "Recréés par « pod install ».", "pod install")},
 }
 
 # Fragments de chemin (en minuscules, séparateurs « / »).
@@ -132,8 +126,6 @@ _BY_PATH = (
     ("/appdata/local/temp", _r("win_temp", "Fichiers temporaires Windows", SAFE,
                                "Fichiers temporaires des applications (ceux en cours d'usage restent).",
                                "cleanmgr", regen=False)),
-    ("/library/caches", _r("mac_caches", "Caches macOS", CAUTION,
-                           "Caches des applications ; recréés, mais fermez les applications avant.")),
     ("/var/cache", _r("var_cache", "Cache système (/var/cache)", CAUTION,
                       "Cache des paquets (apt, dnf…).", "sudo apt clean")),
     ("/var/log/journal", _r("journal", "Journal systemd", CAUTION, "Journaux système.",

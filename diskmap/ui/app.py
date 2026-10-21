@@ -75,7 +75,7 @@ class App(tk.Tk):
         self._stacks["change" if self.mode == "change" else "normal"] = value
 
     def destroy(self) -> None:
-        cancel_all_after(self)       # voir safe_after : des minuteurs orphelins font planter Tk sous macOS
+        cancel_all_after(self)       # voir safe_after : des minuteurs orphelins peuvent faire planter Tk
         super().destroy()
 
     # -- construction --
@@ -239,8 +239,7 @@ class App(tk.Tk):
             elif purpose != "live":
                 messagebox.showerror("DiskMap", "Erreur pendant l'analyse :\n%s" % value)
         elif self._scanning_visible() and self._scanner:
-            # Pas manuel plutôt que Progressbar.start() : l'animation automatique laisse un minuteur Tcl qui fait
-            # abattre Tk sous macOS (observé en CI).
+            # Pas manuel plutôt que Progressbar.start() : l'animation automatique laisse un minuteur Tcl actif.
             self.progress.step(4)
             cur = self._scanner.current
             if len(cur) > 90:

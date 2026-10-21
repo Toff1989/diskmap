@@ -31,13 +31,13 @@ DELETE, COMMAND, NONE = "delete", "command", "none"
 
 # Règles dont le dossier ou le fichier peut être supprimé tel quel (régénérable ou déjà inutile).
 _DIRECT = frozenset({
-    "node_modules", "pycache", "pytest", "mypy", "ruff", "tox", "next", "nuxt", "dart_tool", "deriveddata",
+    "node_modules", "pycache", "pytest", "mypy", "ruff", "tox", "next", "nuxt", "dart_tool",
     "gpucache", "code_cache", "cachestorage", "venv", "cargo_target", "maven_target", "build_dir",
-    "dist_dir", "vendor_php", "vendor_go", "vendor_ruby", "pods", "cargo_registry", "maven_repo",
+    "dist_dir", "vendor_php", "vendor_go", "vendor_ruby", "cargo_registry", "maven_repo",
     "dump", "tmp", "iso",
 })
 # Dossiers « conteneurs » : on les vide mais on les garde.
-_CONTENTS = frozenset({"win_temp", "mac_caches", "dotcache", "trash"})
+_CONTENTS = frozenset({"win_temp", "dotcache", "trash"})
 # Seuls ces sous-dossiers sont supprimés (le reste, comme gradle.properties, est conservé).
 _SUBDIRS: Dict[str, Tuple[str, ...]] = {"gradle": ("caches",)}
 # Règles nettoyées par l'outil officiel ; ``fallback`` : suppression directe si l'outil est absent.
@@ -115,8 +115,7 @@ def _protected_paths() -> List[str]:
     if drive:
         found.add(drive + os.sep)
     if os.name != "nt":
-        found.update(("/usr", "/etc", "/bin", "/sbin", "/lib", "/var", "/opt", "/home", "/Users", "/System",
-                      "/Library", "/Applications", "/boot", "/root"))
+        found.update(("/usr", "/etc", "/bin", "/sbin", "/lib", "/var", "/opt", "/home", "/boot", "/root"))
     return [_norm(p) for p in found]
 
 

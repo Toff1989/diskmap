@@ -1,9 +1,8 @@
-"""Détection des disques / points de montage selon l'OS."""
+"""Détection des disques (Windows) et points de montage (Linux)."""
 from __future__ import annotations
 
 import os
 import string
-import sys
 from typing import Dict, List
 
 
@@ -11,13 +10,6 @@ def detect_drives() -> List[str]:
     """Liste les racines analysables ; repli sur le dossier personnel."""
     if os.name == "nt":
         out = [l + ":\\" for l in string.ascii_uppercase if os.path.exists(l + ":\\")]
-    elif sys.platform == "darwin":
-        out = ["/"]
-        if os.path.isdir("/Volumes"):
-            for v in sorted(os.listdir("/Volumes")):
-                p = os.path.join("/Volumes", v)
-                if os.path.ismount(p) and not os.path.islink(p):
-                    out.append(p)
     else:
         out = _linux_mounts()
     return out or [os.path.expanduser("~")]

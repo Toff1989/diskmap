@@ -14,7 +14,7 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 - **Recherche de doublons** : taille, puis empreinte partielle, puis empreinte complète ; les liens physiques
   sont ignorés. Chaque groupe est surligné sur la carte, avec l'espace récupérable.
 - **« Que supprimer ? »** : catalogue de caches et de dossiers régénérables (`node_modules`, `__pycache__`,
-  DerivedData, Docker, Windows Update…) classés par espace et par sécurité, avec explication et commande conseillée.
+  Docker, Windows Update…) classés par espace et par sécurité, avec explication et commande conseillée.
 - **Suppression sur confirmation explicite**, uniquement depuis « Que supprimer ? » (jamais depuis la carte,
   les doublons ni les fichiers froids) : sélection multiple, fenêtre de confirmation listant les cibles et les
   commandes exactes, bouton rouge inactif tant que la case « définitive » n'est pas cochée.
@@ -34,11 +34,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 - **Rapport HTML autonome** avec treemap interactive (zoom, infobulles, couleur par type ou ancienneté).
 - **Mode sans fenêtre** : `--snapshot` et `--export-html FICHIER`, utilisables en tâche planifiée.
 - Barre de menus (Fichier, Analyse, Outils, Aide), choix du mode de couleur et légende.
-- Icône d'application partout : fenêtre, barre des tâches, Alt-Tab, exécutable, installeur, `.app`, paquet Linux.
+- Icône d'application partout : fenêtre, barre des tâches, Alt-Tab, exécutable, installeur, paquet Linux.
 - Tests de l'interface (fumée) et tests du cœur v2 ; CI de tests sur chaque push et pull request
-  (Linux avec Python 3.8 et 3.12, Windows, macOS).
+  (Linux avec Python 3.8 et 3.12, Windows).
 
 ### Modifié
+- **macOS n'est plus pris en charge** : code, packaging (`.dmg`), tests et CI retirés. DiskMap cible Windows et Linux.
 - DiskMap n'est plus strictement en lecture seule : la suppression existe, mais uniquement sur confirmation
   explicite depuis « Que supprimer ? » (voir ci-dessus).
 - Les chemins longs sont tronqués au milieu dans « Que supprimer ? » (la fin d'un chemin est la partie utile)

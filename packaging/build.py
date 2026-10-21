@@ -5,7 +5,6 @@
 
 Sorties dans dist/ :
     Windows : DiskMap-<v>-windows-<arch>.zip  (+ DiskMap-<v>-setup.exe si Inno Setup est installé)
-    macOS   : DiskMap-<v>-macos-<arch>.dmg    (signature : variable CODESIGN_IDENTITY)
     Linux   : DiskMap-<v>-linux-<arch>.tar.gz (+ diskmap_<v>_<arch>.deb si dpkg-deb est présent)
 """
 from __future__ import annotations
@@ -80,26 +79,6 @@ def package_windows() -> None:
          os.path.join(HERE, "windows", "installer.iss")])
 
 
-# -- macOS -------------------------------------------------------------------
-def package_macos() -> None:
-    app = os.path.join(DIST, "DiskMap.app")
-    identity = os.environ.get("CODESIGN_IDENTITY")
-    if identity:
-        run(["codesign", "--force", "--deep", "--options", "runtime", "--sign", identity, app])
-    else:
-        print("CODESIGN_IDENTITY absent : app non signée (clic droit > Ouvrir au premier lancement)")
-    staging = os.path.join(BUILD, "dmg")
-    shutil.rmtree(staging, ignore_errors=True)
-    os.makedirs(staging)
-    shutil.copytree(app, os.path.join(staging, "DiskMap.app"), symlinks=True)
-    os.symlink("/Applications", os.path.join(staging, "Applications"))
-    dmg = os.path.join(DIST, "DiskMap-%s-macos-%s.dmg" % (__version__, ARCH))
-    run(["hdiutil", "create", "-volname", "DiskMap", "-srcfolder", staging, "-ov", "-format", "UDZO", dmg])
-    if identity:
-        run(["codesign", "--force", "--sign", identity, dmg])
-    print("->", dmg)
-
-
 # -- Linux -------------------------------------------------------------------
 def package_linux() -> None:
     src = os.path.join(DIST, "DiskMap")
@@ -146,8 +125,6 @@ def main() -> None:
         return
     if sys.platform == "win32":
         package_windows()
-    elif sys.platform == "darwin":
-        package_macos()
     else:
         package_linux()
     print("\nTerminé. Fichiers dans", DIST)
